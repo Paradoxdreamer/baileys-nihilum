@@ -1,0 +1,14 @@
+{
+  "name": "@paradoxdreamer/baileys-nihilum",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Nihilum Baileys workspace — fork upstream then implement PATCH_PLAN",
+  "main": "src/nihilum/raw.js",
+  "scripts": {
+    "note": "echo 'Mirror WhiskeySockets/Baileys into this repo first'"
+  },
+  "peerDependencies": {
+    "@whiskeysockets/baileys": "*"
+  },
+  "license": "MIT"
+}
