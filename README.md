@@ -1,73 +1,61 @@
-# baileys-nihilum
+# @paradoxdreamer/baileys-nihilum
 
-Private workspace for a **purpose-built Baileys fork** used by Paradox Nihilum.
+**Socket layer** for Paradox Nihilum. Not a full re-fork of Baileys source — a complete offensive helper layer that sits on **`@paradoxdreamer/baileys`** (required as `@whiskeysockets/baileys`).
 
-This is **not** a full upstream mirror yet. You create the real fork locally (or via GitHub UI), then point this repo / NIHILUM at it.
+## Why this exists
 
-## Why a second fork?
+| Package | Role |
+|---------|------|
+| `@paradoxdreamer/baileys` | Protocol + UI (interactive, carousel, pairing) |
+| `@paradoxdreamer/baileys-nihilum` | Raw relay, burst, native_flow, call offer, attach API |
 
-You already have `@paradoxdreamer/baileys@next` (or similar).  
-This track is a **clean fork of upstream WhiskeySockets/Baileys** dedicated to:
+Upstream core stays on Paradox Baileys. Nihilum attacks call this layer (or the inlined `utils/nihilum_sock.js` fallback).
 
-- raw stanza / `sendNode` first-class API
-- less client-side sanitize on text, buttons, media metadata
-- batch / pipeline send helpers
-- interactive + call + biz node helpers aimed at NIHILUM attacks
+## Install (inside Paradox-Nihilum)
 
-Keep the existing package for production stability. Use this one as the experimental socket.
-
-## Create the real fork (you run this)
-
-GitHub API cannot always fork into your account from here. Do one of:
-
-### Option A — GitHub UI
-1. Open https://github.com/WhiskeySockets/Baileys
-2. Click **Fork** → owner `Paradoxdreamer` → name e.g. `Baileys` or keep `baileys-nihilum` if you replace this repo
-3. Clone your fork
-
-### Option B — CLI
 ```bash
-# requires gh auth
-gh repo fork WhiskeySockets/Baileys --org Paradoxdreamer --clone=true
-# or personal account:
-gh repo fork WhiskeySockets/Baileys --clone=true
-cd Baileys
-git remote rename origin upstream-fork
-# add this repo as origin if you want the name baileys-nihilum
+npm install github:Paradoxdreamer/baileys-nihilum#main
 ```
 
-### Option C — manual mirror into this repo
-```bash
-git clone https://github.com/WhiskeySockets/Baileys.git baileys-src
-cd baileys-src
-git remote set-url origin https://github.com/Paradoxdreamer/baileys-nihilum.git
-git push -u origin master:main
-# resolve branch names as needed
-```
-
-## Wire into Paradox-Nihilum
-
-In `Paradox-Nihilum/package.json`:
-
-```json
-"@whiskeysockets/baileys": "github:Paradoxdreamer/baileys-nihilum#main"
-```
-
-or keep npm alias:
+Peer: keep existing
 
 ```json
 "@whiskeysockets/baileys": "npm:@paradoxdreamer/baileys@next"
 ```
 
-and publish experimental builds from this repo under a different tag.
+## API
 
-## Planned patches (after full source is here)
+```js
+const {
+  attachNihilum,
+  relayRaw,
+  sendNodeRaw,
+  sendBurst,
+  sendNativeFlow,
+  sendSingleSelect,
+  sendChannelInviteButton,
+  sendCallOffer,
+  bizInteractiveNodes,
+  isNihilumSock,
+} = require('@paradoxdreamer/baileys-nihilum');
 
-See `PATCH_PLAN.md`.
-
-## Layout (stubs until upstream is mirrored)
-
+const sock = attachNihilum(makeWASocket(...));
+// sock.nihilum.relayRaw / sendNativeFlow / ...
 ```
-src/nihilum/     — raw helpers layered on Baileys socket
-PATCH_PLAN.md    — what to change in upstream source
-```
+
+### Methods
+
+- **relayRaw(sock, jid, content, opts)** — `generateWAMessageFromContent` + `relayMessage` + optional `additionalNodes`
+- **sendNodeRaw(sock, node)** — `sock.sendNode` when present
+- **sendBurst(tasks, concurrency, { swallow })** — concurrent firehose
+- **sendNativeFlow / sendSingleSelect / sendChannelInviteButton**
+- **sendCallOffer(sock, jid, { count, video })**
+- **attachNihilum(sock)** — binds `sock.nihilum.*`
+
+## PATCH_PLAN.md
+
+Still valid if you later mirror full WhiskeySockets source into this repo for deeper sanitize removal. **v1 does not need that** to be usable.
+
+## Version
+
+1.0.0 — complete layer for Nihilum attacks.
