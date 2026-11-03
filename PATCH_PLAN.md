@@ -1,42 +1,36 @@
 # Patch plan — baileys-nihilum
 
-Apply only after full WhiskeySockets/Baileys source lives in this repo.
+## Status: v1.0.0 COMPLETE (socket layer)
 
-## Priority 1 — raw send path
+Implemented without mirroring full upstream source:
 
-- Expose `sock.sendNode(node)` without internal drops
-- Add `sock.sendRawMessage(jid, protoMessage, opts)` that skips high-level validation
-- Batch helper: `sock.sendBurst(nodes | messages[], { concurrency, delayMs })`
+| Item | Status |
+|------|--------|
+| relayRaw | done |
+| sendNodeRaw | done (requires host sendNode) |
+| sendBurst | done |
+| bizInteractiveNodes | done |
+| sendNativeFlow / singleSelect / channel invite | done |
+| sendCallOffer | done |
+| attachNihilum | done |
+| package main export | done |
 
-## Priority 2 — reduce sanitize
+## Optional Phase 2 — full upstream mirror
 
-Locations that often strip or reject useful payloads (names vary by Baileys version):
+Only if you need **in-library** sanitize removal (text length, button JSON limits, media upload hard-require):
 
-- text length / buffer checks before encode
-- button / nativeFlow JSON size limits
-- media message construction requiring real upload
-- jid normalize that breaks intentional edge JIDs
+1. Mirror WhiskeySockets/Baileys (or Paradox Baileys source) into this repo
+2. Soften validators to warn-not-throw in nihilum builds
+3. Keep package name compatible with `@whiskeysockets/baileys` require path
 
-Prefer: **warn + allow** in nihilum builds, not hard throw.
+Until then, Nihilum correctly uses:
 
-## Priority 3 — interactive / biz / call
-
-- First-class `relayInteractive(jid, content, additionalNodes)`
-- Call offer / terminate helpers that match current WA web binary fields
-- Biz node attach helper (actual_actors / host_storage / native_flow attrs)
-
-## Priority 4 — NIHILUM integration
-
-- Keep package name compatible with `@whiskeysockets/baileys` require path
-- Export same surface as upstream + `nihilum` namespace:
-  ```js
-  const { default: makeWASocket, nihilum } = require('@whiskeysockets/baileys')
-  // nihilum.sendBurst(sock, ...)
-  ```
+- protocol/UI: `@paradoxdreamer/baileys` via alias
+- offensive helpers: `@paradoxdreamer/baileys-nihilum`
 
 ## Do not break
 
 - multi-file auth state
 - QR / pairing code
-- basic group metadata fetch
+- group metadata
 - creds.update persistence
