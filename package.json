@@ -1,11 +1,11 @@
 {
   "name": "@paradoxdreamer/baileys-nihilum",
-  "version": "1.0.0",
-  "description": "Nihilum socket layer for Paradox Baileys — raw relay, burst, interactive, call, attach API",
+  "version": "1.1.0",
+  "description": "Nihilum socket layer — raw relay, burst, interactive, call, offer labels, product cards",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node -e \"require('./index'); console.log('ok')\""
+    "test": "node -e \"require('./index'); console.log('ok', require('./package.json').version)\""
   },
   "peerDependencies": {
     "@whiskeysockets/baileys": "*"
