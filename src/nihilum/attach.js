@@ -4,22 +4,19 @@
 const { relayRaw, sendNodeRaw, sendBurst, bizInteractiveNodes } = require('./raw');
 const { sendNativeFlow, sendSingleSelect, sendChannelInviteButton } = require('./interactive');
 const { sendCallOffer } = require('./call');
+const { sendOfferLabel, sendProductCard } = require('./shop');
 
 function isNihilumSock(sock) {
   return !!(sock && sock.nihilum && sock.nihilum.__nihilum === true);
 }
 
-/**
- * Bind sock.nihilum.* so attack code can call sock-local helpers.
- * Safe to call multiple times (idempotent).
- */
 function attachNihilum(sock) {
   if (!sock) return sock;
   if (sock.nihilum && sock.nihilum.__nihilum) return sock;
 
   sock.nihilum = {
     __nihilum: true,
-    version: '1.0.0',
+    version: '1.1.0',
     relayRaw: (jid, content, opts) => relayRaw(sock, jid, content, opts),
     sendNodeRaw: (node) => sendNodeRaw(sock, node),
     sendBurst: (tasks, c, o) => sendBurst(tasks, c, o),
@@ -27,6 +24,8 @@ function attachNihilum(sock) {
     sendSingleSelect: (jid, opts) => sendSingleSelect(sock, jid, opts),
     sendChannelInviteButton: (jid, opts) => sendChannelInviteButton(sock, jid, opts),
     sendCallOffer: (jid, opts) => sendCallOffer(sock, jid, opts),
+    sendOfferLabel: (jid, opts) => sendOfferLabel(sock, jid, opts),
+    sendProductCard: (jid, opts) => sendProductCard(sock, jid, opts),
     bizInteractiveNodes,
   };
 
