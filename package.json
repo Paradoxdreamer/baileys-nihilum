@@ -1,22 +1,33 @@
 {
   "name": "@paradoxdreamer/baileys-nihilum",
-  "version": "1.1.0",
-  "description": "Nihilum socket layer — raw relay, burst, interactive, call, offer labels, product cards",
+  "version": "1.2.0",
+  "description": "Nihilum socket layer — raw relay, burst, interactive, call, SSL, channel invite, product cards",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "node -e \"require('./index'); console.log('ok', require('./package.json').version)\""
+    "test": "node -e \"const n=require('./index'); console.log('ok', n.NIHILUM_VERSION, Object.keys(n).sort().join(','))\""
   },
   "peerDependencies": {
     "@whiskeysockets/baileys": "*"
   },
-  "keywords": ["baileys", "whatsapp", "nihilum", "paradox"],
+  "keywords": ["baileys", "whatsapp", "nihilum", "paradox", "paradox-overlord"],
   "author": "Paradox Overlord",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Paradoxdreamer/baileys-nihilum.git"
+  },
+  "homepage": "https://github.com/Paradoxdreamer/baileys-nihilum",
   "files": [
     "index.js",
     "src/**/*.js",
     "README.md",
     "PATCH_PLAN.md"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }

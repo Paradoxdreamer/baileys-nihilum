@@ -6,17 +6,26 @@ const { sendNativeFlow, sendSingleSelect, sendChannelInviteButton } = require('.
 const { sendCallOffer } = require('./call');
 const { sendOfferLabel, sendProductCard } = require('./shop');
 
+const NIHILUM_VERSION = '1.2.0';
+
 function isNihilumSock(sock) {
   return !!(sock && sock.nihilum && sock.nihilum.__nihilum === true);
 }
 
+/**
+ * Bind sock.nihilum API. Idempotent — safe to call on every connection.open.
+ */
 function attachNihilum(sock) {
   if (!sock) return sock;
-  if (sock.nihilum && sock.nihilum.__nihilum) return sock;
+  if (sock.nihilum && sock.nihilum.__nihilum) {
+    // refresh version label if older attach left a stub
+    sock.nihilum.version = NIHILUM_VERSION;
+    return sock;
+  }
 
   sock.nihilum = {
     __nihilum: true,
-    version: '1.1.0',
+    version: NIHILUM_VERSION,
     relayRaw: (jid, content, opts) => relayRaw(sock, jid, content, opts),
     sendNodeRaw: (node) => sendNodeRaw(sock, node),
     sendBurst: (tasks, c, o) => sendBurst(tasks, c, o),
@@ -35,4 +44,5 @@ function attachNihilum(sock) {
 module.exports = {
   attachNihilum,
   isNihilumSock,
+  NIHILUM_VERSION,
 };

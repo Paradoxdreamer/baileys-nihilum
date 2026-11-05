@@ -1,61 +1,47 @@
 # @paradoxdreamer/baileys-nihilum
 
-**Socket layer** for Paradox Nihilum. Not a full re-fork of Baileys source — a complete offensive helper layer that sits on **`@paradoxdreamer/baileys`** (required as `@whiskeysockets/baileys`).
-
-## Why this exists
+**Socket layer** for Paradox Nihilum. Sits on `@paradoxdreamer/baileys` (required as `@whiskeysockets/baileys`).
 
 | Package | Role |
 |---------|------|
-| `@paradoxdreamer/baileys` | Protocol + UI (interactive, carousel, pairing) |
-| `@paradoxdreamer/baileys-nihilum` | Raw relay, burst, native_flow, call offer, attach API |
+| `@paradoxdreamer/baileys` | Protocol + UI |
+| `@paradoxdreamer/baileys-nihilum` | Raw relay, burst, native_flow, SSL, call, channel invite |
 
-Upstream core stays on Paradox Baileys. Nihilum attacks call this layer (or the inlined `utils/nihilum_sock.js` fallback).
-
-## Install (inside Paradox-Nihilum)
+## Install
 
 ```bash
+npm install @paradoxdreamer/baileys-nihilum
+# or until published:
 npm install github:Paradoxdreamer/baileys-nihilum#main
 ```
 
-Peer: keep existing
+Peer:
 
 ```json
 "@whiskeysockets/baileys": "npm:@paradoxdreamer/baileys@next"
 ```
 
-## API
+## Usage
 
 ```js
-const {
-  attachNihilum,
-  relayRaw,
-  sendNodeRaw,
-  sendBurst,
-  sendNativeFlow,
-  sendSingleSelect,
-  sendChannelInviteButton,
-  sendCallOffer,
-  bizInteractiveNodes,
-  isNihilumSock,
-} = require('@paradoxdreamer/baileys-nihilum');
+const { attachNihilum, isNihilumSock } = require('@paradoxdreamer/baileys-nihilum');
 
-const sock = attachNihilum(makeWASocket(...));
-// sock.nihilum.relayRaw / sendNativeFlow / ...
+const sock = makeWASocket({ ... });
+attachNihilum(sock); // call on every open — idempotent
+
+// sock.nihilum.relayRaw / sendBurst / sendNativeFlow / ...
 ```
 
-### Methods
+## API
 
-- **relayRaw(sock, jid, content, opts)** — `generateWAMessageFromContent` + `relayMessage` + optional `additionalNodes`
-- **sendNodeRaw(sock, node)** — `sock.sendNode` when present
-- **sendBurst(tasks, concurrency, { swallow })** — concurrent firehose
+- **relayRaw(sock, jid, content, opts)** — always injects `userJid` for Paradox Baileys
+- **sendNodeRaw(sock, node)**
+- **sendBurst(tasks, concurrency, { swallow })**
 - **sendNativeFlow / sendSingleSelect / sendChannelInviteButton**
 - **sendCallOffer(sock, jid, { count, video })**
-- **attachNihilum(sock)** — binds `sock.nihilum.*`
-
-## PATCH_PLAN.md
-
-Still valid if you later mirror full WhiskeySockets source into this repo for deeper sanitize removal. **v1 does not need that** to be usable.
+- **sendOfferLabel / sendProductCard**
+- **attachNihilum(sock)** / **isNihilumSock(sock)**
 
 ## Version
 
-1.0.0 — complete layer for Nihilum attacks.
+**1.2.0** — userJid hardened, attach idempotent, publish-ready.
